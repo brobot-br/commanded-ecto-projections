@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.4.0
+<!-- TODO: Update branch once PR is created -->
+- Introduces concurrency option for projectors ([#1](https://github.com/brobot-br/commanded-ecto-projections/pull/1));
+
+### Upgrading
+This release requires a database migration. Please add the following migration to `priv/repo/migrations`:
+```elixir
+defmodule AddPartitionKeyToProjectionVersions do
+  use Ecto.Migration
+
+  def change do
+    execute "ALTER TABLE projection_versions DROP CONSTRAINT projection_versions_pkey;",
+            "ALTER TABLE projection_versions ADD CONSTRAINT projection_versions_pkey PRIMARY KEY (projection_name);"
+
+    alter table(:projection_versions) do
+      add(:projection_partition_key, :text)
+    end
+
+    execute "UPDATE projection_versions SET projection_partition_key = '';", ""
+
+    execute "ALTER TABLE projection_versions ADD CONSTRAINT projection_versions_pkey PRIMARY KEY (projection_name, projection_partition_key);",
+            "ALTER TABLE projection_versions DROP CONSTRAINT projection_versions_pkey;"
+  end
+end
+```
+
 ## 1.3.0
 
 - Fix Elixir 1.14 compilation warnings ([#45](https://github.com/commanded/commanded-ecto-projections/pull/45)).
