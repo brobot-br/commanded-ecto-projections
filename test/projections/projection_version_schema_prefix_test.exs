@@ -180,7 +180,12 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
           event_number: 1
         })
 
-      projection_version = Repo.get(ProjectionVersion, "TestPrefixProjector", prefix: "test")
+      projection_version =
+        Repo.get_by(
+          ProjectionVersion,
+          [projection_name: "TestPrefixProjector", projection_partition_key: ""],
+          prefix: "test"
+        )
 
       assert projection_version.last_seen_event_number == 1
     end

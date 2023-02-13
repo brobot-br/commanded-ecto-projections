@@ -47,6 +47,32 @@ defmodule MyApp.ExampleProjector do
 end
 ```
 
+## Concurrency and Partitioning
+
+Projectors can run concurrently by adding the `concurrency` option and a `c:partition_by/2` callback (same from the event handlers). The returned value from `partition_key` needs to implement the `String.Chars` protocol.
+
+### Example
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto,
+    application: MyApp.Application,
+    repo: MyApp.Projections.Repo,
+    name: "example_projection",
+		concurrency: 2
+
+	def partition_by(_event, %{stream_id: stream_id} = _metadata), 
+		do: stream_id
+
+  project %AnEvent{name: name}, _metadata, fn multi ->
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+  end
+
+  project %AnotherEvent{name: name}, fn multi ->
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+  end
+end
+```
+
 #### Runtime configuration
 
 The `:application` and `:name` options can be provided at runtime, but `:repo` must be specified at compile-time.

@@ -2,7 +2,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/commanded/commanded-ecto-projections"
-  @version "1.3.0"
+  @version "1.4.0"
 
   def project do
     [
@@ -31,9 +31,9 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp deps do
     [
-      {:commanded, "~> 1.2"},
-      {:ecto, "~> 3.5"},
-      {:ecto_sql, "~> 3.5"},
+      {:commanded, "~> 1.4"},
+      {:ecto, "~> 3.9"},
+      {:ecto_sql, "~> 3.9"},
       {:postgrex, ">= 0.0.0", only: :test},
 
       # Optional dependencies

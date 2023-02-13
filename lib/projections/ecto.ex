@@ -59,8 +59,17 @@ defmodule Commanded.Projections.Ecto do
         projection_name = Map.fetch!(metadata, :handler_name)
         event_number = Map.fetch!(metadata, :event_number)
 
+        partition_key =
+          case function_exported?(__MODULE__, :partition_by, 2) do
+            false -> ""
+            true -> apply(__MODULE__, :partition_by, [event, metadata]) |> to_string
+          end
+
         changeset =
-          %ProjectionVersion{projection_name: projection_name}
+          %ProjectionVersion{
+            projection_name: projection_name,
+            projection_partition_key: partition_key
+          }
           |> ProjectionVersion.changeset(%{last_seen_event_number: event_number})
 
         prefix = schema_prefix(event, metadata)
@@ -68,12 +77,18 @@ defmodule Commanded.Projections.Ecto do
         multi =
           Ecto.Multi.new()
           |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
+            get_by_opts = [
+              projection_name: projection_name,
+              projection_partition_key: partition_key
+            ]
+
             version =
-              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
+              case repo.get_by(ProjectionVersion, get_by_opts, prefix: prefix) do
                 nil ->
                   repo.insert!(
                     %ProjectionVersion{
                       projection_name: projection_name,
+                      projection_partition_key: partition_key,
                       last_seen_event_number: 0
                     },
                     prefix: prefix
@@ -207,9 +222,10 @@ defmodule Commanded.Projections.Ecto do
 
         import Ecto.Changeset
 
-        @primary_key {:projection_name, :string, []}
-
+        @primary_key false
         schema "projection_versions" do
+          field(:projection_name, :string, primary_key: true)
+          field(:projection_partition_key, :string, default: "", primary_key: true)
           field(:last_seen_event_number, :integer)
 
           timestamps(type: :naive_datetime_usec)
