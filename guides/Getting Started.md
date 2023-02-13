@@ -27,6 +27,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
       def change do
         create table(:projection_versions, primary_key: false) do
           add(:projection_name, :text, primary_key: true)
+					add(:projection_partition_key, :text)
           add(:last_seen_event_number, :bigint)
 
           timestamps(type: :naive_datetime_usec)
